@@ -17,6 +17,9 @@ inline double max(double a, double b) {
 	return (a < b) ? b : a;
 }
 
+inline double min(double a, double b) {
+    return (a > b) ? b : a;
+}
 
 MQuaternion quatFromMatrix(const MMatrix &tfm) {
 	double x, y, z, w;
@@ -138,7 +141,7 @@ MStatus SpinePointAt::compute( const MPlug& plug, MDataBlock& data ) {
 	MMatrix tfmB = data.inputValue(SpinePointAt::tfmB).asMatrix();
 	MQuaternion quatB = quatFromMatrix(tfmB);
 
-	double dot = this->quatDot(quatA, quatB);
+	double dot = this->quatDot(quatA, quatB);    
 
 	double angle, factor;
 	this->angleAndFactor(dot, angle, factor);
@@ -147,10 +150,12 @@ MStatus SpinePointAt::compute( const MPlug& plug, MDataBlock& data ) {
 	this->scaleAngleAndFactor(dot, blend, angle, factor, factorA, factorB);
 
 	MQuaternion quatC = this->scaleQuat(quatA, quatB, factorA, factorB);
+    MEulerRotation rot = quatC.asEulerRotation();
+ 
 
-	MVector vOut (0.0, 0.0, 0.0);
+	MVector vOut (rot.x, rot.y, rot.z);
 
-	if (axis == 0)
+	/*if (axis == 0)
 		vOut.x = 1.0;
 
 	else if (axis == 1)
@@ -168,7 +173,7 @@ MStatus SpinePointAt::compute( const MPlug& plug, MDataBlock& data ) {
 	else if (axis == 5)
 		vOut.z = -1.0;
 
-	vOut *= quatC;
+	vOut *= quatC;*/
 
 	data.outputValue(SpinePointAt::pointAt).setMVector(vOut);
 
@@ -183,7 +188,8 @@ inline double SpinePointAt::quatDot(const MQuaternion &quatA, const MQuaternion 
 
 
 void SpinePointAt::angleAndFactor(const double &inValue, double &angle, double &factor) const {
-	double a = inValue;
+	double a = min(max(inValue, -1.0), 1.0);
+
 	double ac = acos(a);
 	double as = sin(ac);
 
@@ -203,7 +209,7 @@ void SpinePointAt::angleAndFactor(const double &inValue, double &angle, double &
 void SpinePointAt::scaleAngleAndFactor(const double &dot, const double &blend,
 									   const double &angle, const double &inFactor,
 									   double &outFactorA, double &outFactorB) const {
-	if (dot >= 1.0){
+	if (dot >= 1.0 - 1.0e-12){
 		outFactorA = (1.0 - blend);
 		outFactorB = blend;
 		return;

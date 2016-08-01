@@ -35,5 +35,6 @@ public:
 	static MObject pointAtY;
 	static MObject pointAtZ;
 	static MObject pointAt;
+    static MObject out;
 };
 
